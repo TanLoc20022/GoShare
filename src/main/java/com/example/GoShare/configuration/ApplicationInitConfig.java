@@ -20,6 +20,11 @@ public class ApplicationInitConfig {
     private final EmployeeService employeeService;
     private final RoleService roleService;
 
+    /**
+     * When application run. Create ADMIN user.
+     * 
+     * @return
+     */
     @Bean
     @Transactional
     ApplicationRunner applicationRunner() {

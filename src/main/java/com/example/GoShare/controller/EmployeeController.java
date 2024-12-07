@@ -12,10 +12,8 @@ import com.example.GoShare.service.EmployeeService;
 
 import lombok.AllArgsConstructor;
 
-
-
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/employee")
 @AllArgsConstructor
 public class EmployeeController {
 
@@ -28,7 +26,7 @@ public class EmployeeController {
         return ApiResponse
                 .builder()
                 .statusCode(HttpStatus.OK.value())
-                .message("Tạo User Thành công")
+                .message("Register User Successful")
                 .build();
     }
 }

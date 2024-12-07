@@ -16,19 +16,20 @@ public class AuthController {
 
     private AuthService authService;
 
-    
     @PostMapping("/login")
-    public ApiResponse<AuthRespone> login(@RequestBody AuthRequest request){
+    public ApiResponse<AuthRespone> login(@RequestBody AuthRequest request) {
         String token = authService.login(request);
 
-        AuthRespone jwtAuthResponse = new AuthRespone();
-        jwtAuthResponse.setAccessToken(token);
+        AuthRespone jwtAuthResponse = AuthRespone
+                .builder()
+                .token(token)
+                .build();
 
         return ApiResponse.<AuthRespone>builder()
-            .data(jwtAuthResponse)
-            .message("Login successful")
-            .statusCode(HttpStatus.OK.value())
-            .build();
+                .data(jwtAuthResponse)
+                .message("Login successful")
+                .statusCode(HttpStatus.OK.value())
+                .build();
     }
 
 }

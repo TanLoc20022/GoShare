@@ -52,7 +52,8 @@ public class SpringSecurityConfig {
 
         // Add a custom authentication filter before the standard username/password
         // filter
-        http.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        // http.addFilterBefore(authenticationFilter,
+        // UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

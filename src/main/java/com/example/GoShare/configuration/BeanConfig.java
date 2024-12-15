@@ -10,8 +10,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
+ * <p>
  * The function, class,... from library is not Bean then can not dependency
  * injection so i config here to register bean
+ * </p>
  */
 @Configuration
 public class BeanConfig {

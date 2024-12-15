@@ -24,12 +24,15 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         private EmployeeRepository employeeRepository;
 
+        /**
+         * Find the user from database
+         */
         @Override
         public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
 
                 Employee employee = employeeRepository.findByUserName(userName)
                                 .orElseThrow(() -> new UsernameNotFoundException(
-                                                "User not exists by Username or Email"));
+                                                "User not exists by Username"));
 
                 Set<GrantedAuthority> authorities = employee.getEmployeeRole().stream()
                                 .map(userRole -> new SimpleGrantedAuthority(userRole.getRoleId().getRoleName()))

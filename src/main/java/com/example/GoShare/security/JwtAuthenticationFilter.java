@@ -6,31 +6,38 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 
 @Component
-@AllArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String TOKEN_PREFIX = "Bearer ";
 
     private JwtTokenProvider jwtTokenProvider;
-
     private UserDetailsService userDetailsService;
+    private HandlerExceptionResolver resolver;
+
+    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, UserDetailsService userDetailsService,
+            @Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) {
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.userDetailsService = userDetailsService;
+        this.resolver = resolver;
+    }
 
     /**
-     * Execute Before Executing Spring Security Filters
-     * Validate the JWT Token and Provides user details to Spring Security for
-     * Authentication
+     * Validate JWT when have request from client
      */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -40,22 +47,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Get JWT token from HTTP request
         String token = getTokenFromRequest(request);
 
-        // Validate Token
-        if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
-            // get username from token
-            String username = jwtTokenProvider.getUsername(token);
+        try {
+            // Validate Token
+            if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
+                // get username from token
+                String username = jwtTokenProvider.getUsername(token);
 
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                    userDetails,
-                    null,
-                    userDetails.getAuthorities());
+                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities());
 
-            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+                securityContext.setAuthentication(authenticationToken);
+                SecurityContextHolder.setContext(securityContext);
+            }
+
+            filterChain.doFilter(request, response);
+        } catch (Exception e) {
+            resolver.resolveException(request, response, null, e);
         }
 
-        filterChain.doFilter(request, response);
     }
 
     /**

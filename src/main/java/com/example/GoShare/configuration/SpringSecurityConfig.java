@@ -5,27 +5,41 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.example.GoShare.security.JwtAuthenticationEntryPoint;
+import com.example.GoShare.security.CustomAuthenticationEntryPoint;
+import com.example.GoShare.security.CustomeAccessDeniedHandler;
 import com.example.GoShare.security.JwtAuthenticationFilter;
 
 @Configuration
 @EnableMethodSecurity
+@EnableWebSecurity
 @AllArgsConstructor
 public class SpringSecurityConfig {
 
-    private JwtAuthenticationEntryPoint authenticationEntryPoint;
+    private final String[] PUBLIC_ENDPOINTS = {
+            "/api/auth/login", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-resources/**",
+            "/webjars/**"
+    };
 
-    private JwtAuthenticationFilter authenticationFilter;
+    private CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+
+    private CustomeAccessDeniedHandler customeAccessDeniedHandler;
+
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     /**
+     * <p>
      * Configures Spring Security settings.
+     * </p>
      * 
+     * <p>
      * This method defines the security filter chain for the application.
      * It disables CSRF, allows public access to specific endpoints, and configures
      * custom authentication handling and filters.
+     * </p>
      * 
      * @param http The HttpSecurity object to configure.
      * @return The configured SecurityFilterChain.
@@ -39,21 +53,19 @@ public class SpringSecurityConfig {
 
         // Configure endpoint access rules
         http.authorizeHttpRequests((authorize) -> {
-            authorize.requestMatchers("/api/auth/login").permitAll();
-            authorize.requestMatchers("/users/**").hasRole("ADMIN");
-            authorize.requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-resources/**",
-                    "/webjars/**").permitAll();
+            authorize.requestMatchers(PUBLIC_ENDPOINTS).permitAll();
+            authorize.requestMatchers("/employee/**").hasRole("ADMIN");
             authorize.anyRequest().authenticated();
         });
 
-        // Handle unauthorized access attempts with a custom entry point
+        // Config customize error response
         http.exceptionHandling(exception -> exception
-                .authenticationEntryPoint(authenticationEntryPoint));
+                .authenticationEntryPoint(customAuthenticationEntryPoint)
+                .accessDeniedHandler(customeAccessDeniedHandler));
 
         // Add a custom authentication filter before the standard username/password
         // filter
-        // http.addFilterBefore(authenticationFilter,
-        // UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
